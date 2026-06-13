@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - 90 min</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 400px;
+            height: 550px;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body.on-break {
+            background: linear-gradient(135deg, #2a1a1a 0%, #3a2020 100%);
+        }
+
+        .view-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #888;
+            margin-bottom: 32px;
+            font-weight: 600;
+        }
+
+        /* ... */
+
+        .subtitle {
+            font-size: 15px;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-weight: 500;
+            max-width: 90%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 20px;
+            /* Prevent jump if empty */
+        }
+
+        .timer-circle {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+        }
+
+        /* ... */
+
+        .stats {
+            margin-bottom: 20px;
+            color: #888;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .btn-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            flex: 1;
+            max-width: 120px;
+        }
+
+        .btn-control:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        button.break {
+            color: #ffd700;
+            border-color: rgba(255, 215, 0, 0.2);
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        button.break:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        button.resume {
+            color: #4cd964;
+            border-color: rgba(76, 217, 100, 0.2);
+            background: rgba(76, 217, 100, 0.05);
+        }
+
+        button.resume:hover {
+            background: rgba(76, 217, 100, 0.1);
+        }
+
+        button.stop {
+            color: #ff5252;
+            border-color: rgba(255, 82, 82, 0.2);
+            background: rgba(255, 82, 82, 0.05);
+        }
+
+        button.stop:hover {
+            background: rgba(255, 82, 82, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SETUP / TOPIC VIEW -->
+    <div class="view-container" id="topic-view" style="display: flex;">
+        <div class="title">WHAT ARE YOU STUDYING?</div>
+        <div class="input-group">
+            <input type="text" id="topicInput" placeholder="Calculus, Physics, etc..." autocomplete="off">
+            <button id="startFocusBtn" class="btn-primary">START FOCUS</button>
+        </div>
+    </div>
+
+    <!-- TIMER VIEW -->
+    <div class="view-container" id="timer-view" style="display: none;">
+        <div class="title" id="title">FOCUS MODE</div>
+        <div class="subtitle" id="topic-display"></div>
+
+        <div class="timer-circle">
+            <svg class="progress-ring" width="180" height="180">
+                <circle class="progress-ring-circle" cx="90" cy="90" r="80"></circle>
+                <circle class="progress-ring-progress" cx="90" cy="90" r="80" id="progress"></circle>
+            </svg>
+            <div class="timer-text" id="timer">90:00</div>
+        </div>
+
+        <div class="stats">
+            <div id="session-count">Session 1</div>
+            <div id="today-time">Today: 0m</div>
+            <div id="break-count">Breaks: 0/6</div>
+        </div>
+
+        <div class="controls">
+            <button id="breakBtn" class="btn-control break">Take Break</button>
+            <button id="resumeBtn" class="btn-control resume" style="display:none;">Resume</button>
+            <button id="stopBtn" class="btn-control stop">Stop</button>
+        </div>
+    </div>
+
+    <!-- COMPLETION VIEW -->
+    <div class="view-container" id="completion-view" style="display: none;">
+        <div class="title">SESSION FINISHED?</div>
+        <div style="font-size: 14px; color: #999; margin-bottom: 30px; line-height: 1.4;">
+            Did you complete your goal for<br>
+            <span id="completion-topic" style="color: #00d4ff; font-weight: 600;">Calculus</span>?
+        </div>
+
+        <div class="input-group">
+            <button id="confirmCompleteBtn" class="btn-primary"
+                style="background: linear-gradient(135deg, #4cd964 0%, #2e8b57 100%); margin-bottom: 12px;">
+                YES, COMPLETED
+            </button>
+            <button id="confirmIncompleteBtn" class="btn-control"
+                style="width: 90%; max-width: none; border-color: rgba(255,255,255,0.2);">
+                NO, JUST STOPPING
+            </button>
+            <button id="cancelStopBtn" class="btn-control"
+                style="width: 90%; max-width: none; border: none; background: transparent; color: #666; font-size: 11px; margin-top: 10px;">
+                Resume Session
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { invoke } from '@tauri-apps/api/core';
+
+        const TOTAL_SECONDS = 90 * 60;
+        const topicView = document.getElementById('topic-view');
+        const timerView = document.getElementById('timer-view');
+        const topicInput = document.getElementById('topicInput');
+        const startFocusBtn = document.getElementById('startFocusBtn');
+        const topicDisplay = document.getElementById('topic-display');
+
+        const timerEl = document.getElementById('timer');
+        const progressEl = document.getElementById('progress');
+        const titleEl = document.getElementById('title');
+        const breakBtn = document.getElementById('breakBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const sessionCountEl = document.getElementById('session-count');
+        const todayTimeEl = document.getElementById('today-time');
+        const breakCountEl = document.getElementById('break-count');
+
+        const radius = 80;
+        const circumference = 2 * Math.PI * radius;
+        progressEl.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressEl.style.strokeDashoffset = circumference;
+
+        // Auto-focus input when shown
+        function showTopicInput() {
+            topicView.style.display = 'flex';
+            timerView.style.display = 'none';
+            setTimeout(() => topicInput.focus(), 100);
+        }
+
+        function showTimer() {
+            topicView.style.display = 'none';
+            timerView.style.display = 'flex';
+        }
+
+        startFocusBtn.addEventListener('click', async () => {
+            const topic = topicInput.value.trim();
+            if (topic) {
+                try {
+                    await invoke('set_session_topic', { topic });
+                    topicDisplay.textContent = topic;
+                    showTimer();
+                } catch (error) {
+                    console.error('Failed to set topic:', error);
+                }
+            } else {
+                topicInput.style.borderColor = '#ff4444';
+            }
+        });
+
+        // Allow Enter key to start
+        topicInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startFocusBtn.click();
+        });
+
+        async function loadStats() {
+            try {
+                const stats = await invoke('get_menu_stats');
+                sessionCountEl.textContent = `Session ${stats.sessions_today + 1}`;
+                todayTimeEl.textContent = `Today: ${stats.time_today}`;
+                breakCountEl.textContent = `Breaks: ${stats.breaks_today}/6`;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        breakBtn.addEventListener('click', async () => {
+            try {
+                await invoke('start_break');
+            } catch (error) {
+                console.error('Failed to start break:', error);
+            }
+        });
+
+        resumeBtn.addEventListener('click', async () => {
+            try {
+                await invoke('end_break');
+            } catch (error) {
+                console.error('Failed to end break:', error);
+            }
+        });
+
+        const completionView = document.getElementById('completion-view');
+        const completionTopic = document.getElementById('completion-topic');
+        const confirmCompleteBtn = document.getElementById('confirmCompleteBtn');
+        const confirmIncompleteBtn = document.getElementById('confirmIncompleteBtn');
+        const cancelStopBtn = document.getElementById('cancelStopBtn');
+
+        // ... existing view switching code ...
+
+        function showCompletionDialog() {
+            topicView.style.display = 'none';
+            timerView.style.display = 'none';
+            completionView.style.display = 'flex';
+            completionTopic.textContent = topicDisplay.textContent || 'your session';
+        }
+
+        function hideCompletionDialog() {
+            completionView.style.display = 'none';
+            showTimer();
+        }
+
+        // ... existing event listeners ...
+
+        stopBtn.addEventListener('click', () => {
+            // Instead of stopping immediately, show dialog
+            showCompletionDialog();
+        });
+
+        cancelStopBtn.addEventListener('click', () => {
+            hideCompletionDialog();
+        });
+
+        async function handleStop(completed) {
+            try {
+                await invoke('stop_timer', { completed });
+            } catch (error) {
+                console.error('Failed to stop timer:', error);
+            }
+        }
+
+        confirmCompleteBtn.addEventListener('click', () => handleStop(true));
+        confirmIncompleteBtn.addEventListener('click', () => handleStop(false));
+
+        // CLEAN POLLING - Update every 100ms
+        setInterval(async () => {
+            try {
+                const state = await invoke('get_timer_state');
+
+                // If we are in completion view, don't auto-switch back to timer
+                if (completionView.style.display === 'flex') {
+                    return;
+                }
+
+                // If paused (waiting for input), ensure topic view is shown
+                if (state.is_paused) {
+                    if (topicView.style.display === 'none') {
+                        showTopicInput();
+                    }
+                    return;
+                }
+
+                // If running (not paused), ensure timer view is shown
+                // But NOT if we are showing the completion dialog
+                if (!state.is_paused && timerView.style.display === 'none') {
+                    showTimer();
+                }
+
+                // ... rest of timer logic ...
+
+
+
+                if (state.is_on_break) {
+                    // BREAK MODE - count UP from 0
+                    const minutes = Math.floor(state.break_seconds / 60);
+                    const seconds = state.break_seconds % 60;
+                    timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                    // Fill progress as break gets longer (max 20 min)
+                    const maxBreakTime = 20 * 60;
+                    const progress = Math.min(state.break_seconds / maxBreakTime, 1);
+                    const offset = circumference - (progress * circumference);
+                    progressEl.style.strokeDashoffset = offset;
+
+                    // Update UI
+                    document.body.classList.add('on-break');
+                    titleEl.classList.add('break-mode');
+                    titleEl.textContent = 'ON BREAK';
+                    breakBtn.style.display = 'none';
+                    resumeBtn.style.display = 'inline-block';
+                } else {
+                    // FOCUS MODE - count DOWN from 90:00
+                    const minutes = Math.floor(state.focus_seconds / 60);
+                    const seconds = state.focus_seconds % 60;
+                    timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                    // Update progress ring
+                    const progress = (TOTAL_SECONDS - state.focus_seconds) / TOTAL_SECONDS;
+                    const offset = circumference - (progress * circumference);
+                    progressEl.style.strokeDashoffset = offset;
+
+                    // Reset UI
+                    document.body.classList.remove('on-break');
+                    titleEl.classList.remove('break-mode');
+                    titleEl.textContent = 'FOCUS MODE';
+                    breakBtn.style.display = 'inline-block';
+                    resumeBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Timer update failed:', error);
+            }
+        }, 100);
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadStats();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,22 @@
+[package]
+name = "luma"
+version = "0.1.0"
+description = "Luma tray app"
+authors = ["Aamir Alsufi"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.5.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.9.5", features = ["macos-private-api", "tray-icon"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+png = "0.17"
+image = "0.24"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+tokio = { version = "1", features = ["full"] }
+tauri-plugin-autostart = "~2.0.0"
+tauri-plugin-single-instance = "~2.0.0"
+
